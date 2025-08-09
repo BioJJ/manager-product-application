@@ -1,0 +1,62 @@
+version: "3.5"
+
+services:
+  db:
+    image: biojj/oracle-free-custom:23-slim
+    platform: linux/amd64
+    container_name: manager-product-db
+    ports:
+      - "1522:1521"
+    environment:
+      - ORACLE_PASSWORD=oracle
+      - ORACLE_DATABASE=XEPDB1
+      - APP_USER=MCR_C
+      - APP_USER_PASSWORD=mcr_c
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "tnsping", "XEPDB1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - docker-manager
+    restart: unless-stopped
+
+  api:
+    image: biojj/manager-product-api
+    container_name: manager-product-api
+    ports:
+      - 8080:8080
+    environment:
+    - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@db:1521/XEPDB1
+    - SPRING_DATASOURCE_USERNAME=MCR_C
+    - SPRING_DATASOURCE_PASSWORD=mcr_c
+    - SPRING_DATASOURCE_DRIVER-CLASS-NAME=oracle.jdbc.OracleDriver
+    - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.OracleDialect
+    - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+    - SPRING_JPA_SHOW-SQL=true
+    - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+    - SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA=MCR_C
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - docker-manager
+        
+  app:
+    image: biojj/manager-product-app
+    container_name: manager-product-app
+    ports: 
+      - 8082:80
+    depends_on:
+      - api
+    networks:
+      - docker-manager
+
+networks: 
+  docker-manager:
+    driver: bridge
+
+volumes:
+  oracle-data:
