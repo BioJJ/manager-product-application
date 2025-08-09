@@ -39,6 +39,7 @@ services:
       - SPRING_JPA_SHOW-SQL=true
       - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
       - SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA=MCR_C
+      - SPRING_PROFILES_ACTIVE=prod
     depends_on:
       db:
         condition: service_healthy
@@ -50,7 +51,7 @@ services:
     image: biojj/manager-product-app
     container_name: manager-product-app
     ports: 
-      - 8082:80
+      - 4200:80
     depends_on:
       - api
     networks:
