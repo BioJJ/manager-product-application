@@ -15,10 +15,11 @@ services:
     volumes:
       - oracle-data:/opt/oracle/oradata
     healthcheck:
-      test: ["CMD", "tnsping", "XEPDB1"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
+      test: ["CMD", "bash", "-c", "echo -e 'connect sys/oracle@XEPDB1 as sysdba\nSELECT 1 FROM DUAL;' | sqlplus -L | grep -q '1'"]
+      interval: 15s
+      timeout: 30s
+      retries: 20
+      start_period: 120s
     networks:
       - docker-manager
     restart: unless-stopped
@@ -29,20 +30,21 @@ services:
     ports:
       - 8080:8080
     environment:
-    - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@db:1521/XEPDB1
-    - SPRING_DATASOURCE_USERNAME=MCR_C
-    - SPRING_DATASOURCE_PASSWORD=mcr_c
-    - SPRING_DATASOURCE_DRIVER-CLASS-NAME=oracle.jdbc.OracleDriver
-    - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.OracleDialect
-    - SPRING_JPA_HIBERNATE_DDL-AUTO=update
-    - SPRING_JPA_SHOW-SQL=true
-    - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
-    - SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA=MCR_C
+      - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@db:1521/XEPDB1
+      - SPRING_DATASOURCE_USERNAME=MCR_C
+      - SPRING_DATASOURCE_PASSWORD=mcr_c
+      - SPRING_DATASOURCE_DRIVER-CLASS-NAME=oracle.jdbc.OracleDriver
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.OracleDialect
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_JPA_SHOW-SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA=MCR_C
     depends_on:
       db:
         condition: service_healthy
     networks:
       - docker-manager
+    restart: on-failure
         
   app:
     image: biojj/manager-product-app
